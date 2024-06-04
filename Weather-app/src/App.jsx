@@ -1,49 +1,32 @@
 import { useEffect, useState } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faSun,
-  faCloud,
-  faCloudSun,
-  faCloudShowersHeavy,
-  faBolt,
-  faSnowflake,
-  faSmog,
-} from "@fortawesome/free-solid-svg-icons";
 import "./App.css";
 
-const API_KEY = "549532f4c754fa56ffe746f741b5f8f8";
-const cityName = "london";
-const BASE_URL = `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${API_KEY}&units=metric`;
+// let API_KEY = process.env.WEATHER_API_KEY;
 
-// Mapping weather conditions to Font Awesome icons
-const weatherIcons = {
-  "clear sky": faSun,
-  "few clouds": faCloudSun,
-  "scattered clouds": faCloud,
-  "broken clouds": faCloud,
-  "shower rain": faCloudShowersHeavy,
-  rain: faCloudShowersHeavy,
-  thunderstorm: faBolt,
-  snow: faSnowflake,
-  mist: faSmog,
-};
+const API_KEY = "549532f4c754fa56ffe746f741b5f8f8";
+const BASE_URL = `https://api.openweathermap.org/data/2.5/weather?appid=${API_KEY}&units=metric`;
 
 function App() {
   const [weather, setWeather] = useState(null);
-
+  const [cityName, setCityName] = useState("Jaipur");
   useEffect(() => {
     async function getWeatherData() {
       const data = await fetchWeatherData();
       setWeather(data);
-      console.log(data.main);
     }
     getWeatherData();
-  }, []);
+  }, [cityName]);
 
   const fetchWeatherData = async () => {
-    const response = await fetch(BASE_URL);
-    const result = await response.json();
-    return result;
+    try {
+      const url = `${BASE_URL}&q=${cityName}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      return data;
+      // setWeather(data);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   const formatDate = (timestamp) => {
@@ -51,40 +34,41 @@ function App() {
     return date.toLocaleString();
   };
 
-  const getWeatherIcon = (weatherDescription) => {
-    return weatherIcons[weatherDescription] || faCloud; // fallback to a default icon if no match found
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    fetchWeatherData();
   };
 
   return (
     <div className="bg-gray-200 min-h-screen flex items-center justify-center">
       <div className="bg-white shadow-md rounded-lg p-8 max-w-screen-md w-full">
-        <div className="mb-4 flex justify-between">
+        <form onSubmit={handleSubmit} className="mb-4 flex justify-center">
           <input
             type="text"
             className="border rounded-md p-2 mr-2 w-full"
             placeholder="Enter city name"
+            // value={cityName}
+            onChange={(event) => setCityName(event.target.value)}
           />
-          <button className="bg-blue-500 text-white rounded-md p-2">
+          <button
+            type="submit"
+            className="bg-blue-500 text-white rounded-md p-2"
+          >
             Search
           </button>
-        </div>
+        </form>
+
         {weather ? (
           <>
             <div className="flex justify-around items-center mb-6">
               <div className="text-center">
-                <h1 className="text-3xl font-bold">
-                  {weather.name}, <span>{weather.sys.country}</span>
-                </h1>
+                <h1 className="text-3xl font-bold">{weather.name}</h1>
                 <p className="text-gray-600">{formatDate(weather.dt)}</p>
                 <p className="capitalize text-xl">
                   {weather.weather[0].description}
                 </p>
               </div>
               <div className="text-center">
-                {/* <FontAwesomeIcon
-                  icon={getWeatherIcon(weather.weather[0].description)}
-                  size="4x"
-                /> */}
                 <img
                   className="w-24 h-24 mx-auto"
                   src={`http://openweathermap.org/img/wn/${weather.weather[0].icon}@2x.png`}
